@@ -85,7 +85,7 @@ QQ 用户 ──> QQ 服务器 ──> SnowLuma (OneBot 3000/3001)
 ├─ payload/                 # 随包资源（桥接源码/App/补丁/模板/工具）
 ├─ docs/                    # 小白教程 + 给 AI 的指令
 ├─ assets/                  # 截图
-└─ dist/                    # 打包好的 zip
+└─ dist/                    # 下载说明（安装包见 Releases）
 ```
 
 ## 常见问题
