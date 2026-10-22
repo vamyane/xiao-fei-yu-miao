@@ -391,9 +391,15 @@ if (-not $DryRun) {
 
   $startPs = Join-Path $InstallDir 'start-all.ps1'
   $stopPs = Join-Path $InstallDir 'stop-all.ps1'
-  & schtasks.exe /Create /TN 'QQBotStart' /TR ('powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $startPs + '"') /SC ONCE /ST 00:00 /F | Out-Null
-  & schtasks.exe /Create /TN 'QQBotStop' /TR ('powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $stopPs + '"') /SC ONCE /ST 00:00 /F | Out-Null
-  Write-Log '计划任务 QQBotStart / QQBotStop 已创建' 'OK'
+  # 隐藏启动器：wscript 是 GUI 子系统，任务计划触发时不会闪控制台窗口
+  $hiddenVbs = Join-Path $InstallDir 'run-hidden.vbs'
+  Copy-Item (Join-Path $script:Payload 'run-hidden.vbs') $hiddenVbs -Force
+  $startTr = ('wscript.exe "' + $hiddenVbs + '" "' + $startPs + '"')
+  $stopTr = ('wscript.exe "' + $hiddenVbs + '" "' + $stopPs + '"')
+  & schtasks.exe /Create /TN 'QQBotStart' /TR $startTr /SC ONCE /ST 00:00 /F | Out-Null
+  & schtasks.exe /Create /TN 'QQBotStop' /TR $stopTr /SC ONCE /ST 00:00 /F | Out-Null
+  & schtasks.exe /Create /TN 'qq-bridge-autosync' /TR $startTr /SC MINUTE /MO 5 /F | Out-Null
+  Write-Log '计划任务 QQBotStart / QQBotStop / 自动同步（静默）已创建' 'OK'
 
   $ws = New-Object -ComObject WScript.Shell
   $appExe = Join-Path $InstallDir 'app\小肥鱼喵.exe'
@@ -402,7 +408,7 @@ if (-not $DryRun) {
   $lnk.TargetPath = $appExe; $lnk.WorkingDirectory = (Join-Path $InstallDir 'app'); $lnk.IconLocation = "$appExe,0"; $lnk.Description = '小肥鱼喵 · QQ 智能体控制台'; $lnk.Save()
   $startup = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Startup\qq-bridge.lnk'
   $lnk2 = $ws.CreateShortcut($startup)
-  $lnk2.TargetPath = 'powershell.exe'; $lnk2.Arguments = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $startPs + '"'; $lnk2.WorkingDirectory = $InstallDir; $lnk2.Description = '开机自动启动小肥鱼喵'; $lnk2.Save()
+  $lnk2.TargetPath = 'C:\Windows\System32\wscript.exe'; $lnk2.Arguments = '"' + $hiddenVbs + '" "' + $startPs + '"'; $lnk2.WorkingDirectory = $InstallDir; $lnk2.Description = '开机自动启动小肥鱼喵（静默）'; $lnk2.Save()
   Write-Log '桌面与开机自启快捷方式已创建' 'OK'
 
   # 11) 可选 ComfyUI
