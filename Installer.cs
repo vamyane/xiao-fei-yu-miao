@@ -13,10 +13,9 @@ class Installer
     static TextBox logBox;
     static ProgressBar bar;
     static Label status;
-    static Button btnStart, btnOpenLog, btnOpenApp, btnOpenReport, btnOpenAi, btnClose;
+    static Button btnStart, btnOpenLog, btnOpenReport, btnOpenAi, btnOpenApp, btnClose;
     static bool running = false;
     static string kitDir = "";
-    static bool success = false;
 
     [STAThread]
     static void Main()
@@ -32,11 +31,37 @@ class Installer
     {
         Label l = new Label();
         l.Text = text;
-        l.Left = x; l.Top = y; l.Width = w; l.Height = 24;
+        l.Left = x; l.Top = y;
+        l.AutoSize = true;
+        l.MaximumSize = new Size(w, 0);
         l.Font = new Font("Microsoft YaHei UI", size, bold ? FontStyle.Bold : FontStyle.Regular);
         l.ForeColor = color;
         l.BackColor = Color.Transparent;
         return l;
+    }
+
+    static TextBox MakeBox(int x, int y, int w, string text)
+    {
+        TextBox t = new TextBox();
+        t.Left = x; t.Top = y; t.Width = w;
+        t.Text = text;
+        t.BackColor = Color.FromArgb(26, 29, 36);
+        t.ForeColor = Color.FromArgb(238, 242, 248);
+        t.BorderStyle = BorderStyle.FixedSingle;
+        t.Font = new Font("Microsoft YaHei UI", 9.5f);
+        t.Height = 26;
+        return t;
+    }
+
+    static Button MakeButton(string text, int x, int y, int w, int h, Color back, Color fore)
+    {
+        Button b = new Button();
+        b.Text = text; b.Left = x; b.Top = y; b.Width = w; b.Height = h;
+        b.BackColor = back; b.ForeColor = fore; b.FlatStyle = FlatStyle.Flat;
+        b.FlatAppearance.BorderSize = 0;
+        b.Font = new Font("Microsoft YaHei UI", 9f);
+        b.Cursor = Cursors.Hand;
+        return b;
     }
 
     static void BuildUi()
@@ -50,124 +75,138 @@ class Installer
 
         form = new Form();
         form.Text = "小肥鱼喵 · 一键部署";
-        form.ClientSize = new Size(900, 660);
+        form.ClientSize = new Size(900, 800);
         form.StartPosition = FormStartPosition.CenterScreen;
         form.BackColor = bg;
         form.ForeColor = text;
         form.FormBorderStyle = FormBorderStyle.FixedSingle;
         form.MaximizeBox = false;
+        form.AutoScaleMode = AutoScaleMode.None;
 
-        form.Controls.Add(MakeLabel("小肥鱼喵", 26, 18, 240, 20f, true, accent));
-        form.Controls.Add(MakeLabel("QQ 智能体 · 一键部署（DSH + SnowLuma + 桥接 + 控制台）", 26, 46, 620, 9.5f, false, muted));
+        string iconPath = Path.Combine(kitDir, "app.ico");
+        if (File.Exists(iconPath)) { try { form.Icon = new Icon(iconPath); } catch { } }
 
+        // 标题区
+        Label title = MakeLabel("小肥鱼喵", 26, 12, 400, 20f, true, accent);
+        form.Controls.Add(title);
+        form.Controls.Add(MakeLabel("QQ 智能体 · 一键部署（DSH + SnowLuma + 桥接 + 控制台）", 26, 52, 700, 9.5f, false, muted));
+
+        // 风险确认
         chkAgree = new CheckBox();
-        chkAgree.Text = "我已了解：DSH/SnowLuma 需自行安装并同意其协议；第三方协议端登录存在 QQ 封号风险，请使用小号。";
-        chkAgree.Left = 28; chkAgree.Top = 82; chkAgree.Width = 840; chkAgree.Height = 26;
+        chkAgree.Text = "我已了解：DSH/SnowLuma 需自行安装并同意其协议；第三方协议端存在 QQ 封号风险，请使用小号";
+        chkAgree.Left = 26; chkAgree.Top = 84; chkAgree.Width = 850; chkAgree.Height = 26;
         chkAgree.ForeColor = Color.FromArgb(251, 191, 36);
         chkAgree.BackColor = Color.Transparent;
         form.Controls.Add(chkAgree);
 
-        int top = 120;
-        form.Controls.Add(MakeLabel("DeepSeek API Key（部署完成后自动复制，去 DSH 设置里粘贴）", 28, top, 600, 9f, true, text));
-        apiKey = new TextBox(); apiKey.Left = 28; apiKey.Top = top + 26; apiKey.Width = 560; apiKey.Height = 30;
-        apiKey.UseSystemPasswordChar = true; apiKey.BackColor = panel; apiKey.ForeColor = text; apiKey.BorderStyle = BorderStyle.FixedSingle;
+        // API Key
+        form.Controls.Add(MakeLabel("DeepSeek API Key（部署完成后自动复制，去 DSH 设置里粘贴）", 26, 122, 700, 9f, true, text));
+        apiKey = MakeBox(26, 146, 560, "");
+        apiKey.UseSystemPasswordChar = true;
         apiKey.Font = new Font("Consolas", 10.5f);
         form.Controls.Add(apiKey);
 
-        form.Controls.Add(MakeLabel("你的主号 QQ", 28, top + 64, 200, 9f, true, text));
-        mainQQ = new TextBox(); mainQQ.Left = 28; mainQQ.Top = top + 90; mainQQ.Width = 260; mainQQ.BackColor = panel; mainQQ.ForeColor = text; mainQQ.BorderStyle = BorderStyle.FixedSingle; mainQQ.Font = new Font("Consolas", 10.5f);
+        // QQ
+        form.Controls.Add(MakeLabel("你的主号 QQ", 26, 186, 250, 9f, true, text));
+        mainQQ = MakeBox(26, 210, 250, "");
+        mainQQ.Font = new Font("Consolas", 10.5f);
         form.Controls.Add(mainQQ);
 
-        form.Controls.Add(MakeLabel("机器人小号 QQ（可选，扫码后自动识别可不填）", 320, top + 64, 400, 9f, true, text));
-        botQQ = new TextBox(); botQQ.Left = 320; botQQ.Top = top + 90; botQQ.Width = 260; botQQ.BackColor = panel; botQQ.ForeColor = text; botQQ.BorderStyle = BorderStyle.FixedSingle; botQQ.Font = new Font("Consolas", 10.5f);
+        form.Controls.Add(MakeLabel("机器人小号 QQ（可选，扫码后自动识别）", 300, 186, 320, 9f, true, text));
+        botQQ = MakeBox(300, 210, 250, "");
+        botQQ.Font = new Font("Consolas", 10.5f);
         form.Controls.Add(botQQ);
 
-        int row2 = top + 132;
-        form.Controls.Add(MakeLabel("安装目录（桥接 + 控制台）", 28, row2, 300, 9f, true, text));
-        installDir = new TextBox(); installDir.Left = 28; installDir.Top = row2 + 26; installDir.Width = 360; installDir.Text = @"D:\qq-bridge"; installDir.BackColor = panel; installDir.ForeColor = text; installDir.BorderStyle = BorderStyle.FixedSingle;
+        // 目录 + 下载按钮
+        form.Controls.Add(MakeLabel("安装目录（桥接 + 控制台）", 26, 250, 300, 9f, true, text));
+        installDir = MakeBox(26, 274, 330, @"D:\qq-bridge");
         form.Controls.Add(installDir);
 
-        form.Controls.Add(MakeLabel("SnowLuma 目录", 420, row2, 300, 9f, true, text));
-        snowDir = new TextBox(); snowDir.Left = 420; snowDir.Top = row2 + 26; snowDir.Width = 300; snowDir.Text = @"D:\SnowLuma"; snowDir.BackColor = panel; snowDir.ForeColor = text; snowDir.BorderStyle = BorderStyle.FixedSingle;
+        form.Controls.Add(MakeLabel("SnowLuma 目录", 380, 250, 200, 9f, true, text));
+        snowDir = MakeBox(380, 274, 240, @"D:\SnowLuma");
         form.Controls.Add(snowDir);
 
-        int row3 = row2 + 68;
-        chkDsh = new CheckBox(); chkDsh.Text = "DSH 已安装并完成初始化/登录"; chkDsh.Left = 28; chkDsh.Top = row3; chkDsh.Width = 310; chkDsh.ForeColor = text; chkDsh.BackColor = Color.Transparent; chkDsh.Checked = true;
-        form.Controls.Add(chkDsh);
-
-        chkSnow = new CheckBox(); chkSnow.Text = "SnowLuma 已启动并扫码登录"; chkSnow.Left = 350; chkSnow.Top = row3; chkSnow.Width = 330; chkSnow.ForeColor = text; chkSnow.BackColor = Color.Transparent; chkSnow.Checked = true;
-        form.Controls.Add(chkSnow);
-
-        chkComfy = new CheckBox(); chkComfy.Text = "额外安装 ComfyUI 画图（约 4GB 下载，可稍后加）"; chkComfy.Left = 28; chkComfy.Top = row3 + 26; chkComfy.Width = 520; chkComfy.ForeColor = muted; chkComfy.BackColor = Color.Transparent;
-        form.Controls.Add(chkComfy);
-
-        Button btnDshPage = MakeButton("下载 DSH", 560, row3 - 4, 90, 28, panel, text);
+        Button btnDshPage = MakeButton("下载 DSH", 640, 272, 95, 30, panel, text);
         btnDshPage.Click += (s, e) => OpenUrl("https://deepseek-harness.github.io/");
         form.Controls.Add(btnDshPage);
-        Button btnSnowPage = MakeButton("下载 SnowLuma", 660, row3 - 4, 120, 28, panel, text);
+
+        Button btnSnowPage = MakeButton("下载 SnowLuma", 745, 272, 130, 30, panel, text);
         btnSnowPage.Click += (s, e) => OpenUrl("https://github.com/SnowLuma/SnowLuma/releases/latest");
         form.Controls.Add(btnSnowPage);
 
-        btnStart = MakeButton("▶ 开始部署", 28, row3 + 62, 200, 42, green, Color.FromArgb(5, 46, 34));
+        // 就绪确认
+        chkDsh = new CheckBox();
+        chkDsh.Text = "DSH 已安装并完成初始化/登录";
+        chkDsh.Left = 26; chkDsh.Top = 320; chkDsh.Width = 300;
+        chkDsh.ForeColor = text; chkDsh.BackColor = Color.Transparent; chkDsh.Checked = true;
+        form.Controls.Add(chkDsh);
+
+        chkSnow = new CheckBox();
+        chkSnow.Text = "SnowLuma 已启动并扫码登录";
+        chkSnow.Left = 340; chkSnow.Top = 320; chkSnow.Width = 300;
+        chkSnow.ForeColor = text; chkSnow.BackColor = Color.Transparent; chkSnow.Checked = true;
+        form.Controls.Add(chkSnow);
+
+        chkComfy = new CheckBox();
+        chkComfy.Text = "额外安装 ComfyUI 画图（约 4GB 下载，可稍后加）";
+        chkComfy.Left = 26; chkComfy.Top = 352; chkComfy.Width = 520;
+        chkComfy.ForeColor = muted; chkComfy.BackColor = Color.Transparent;
+        form.Controls.Add(chkComfy);
+
+        // 开始按钮 + 状态
+        btnStart = MakeButton("▶ 开始部署", 26, 390, 200, 44, green, Color.FromArgb(5, 46, 34));
         btnStart.Font = new Font("Microsoft YaHei UI", 10.5f, FontStyle.Bold);
         btnStart.Click += (s, e) => StartDeploy();
         form.Controls.Add(btnStart);
 
-        status = MakeLabel("准备就绪", 250, row3 + 72, 620, 9.5f, false, muted);
+        status = MakeLabel("准备就绪", 250, 402, 620, 9.5f, false, muted);
         form.Controls.Add(status);
 
-        bar = new ProgressBar(); bar.Left = 28; bar.Top = row3 + 112; bar.Width = 844; bar.Height = 6;
+        bar = new ProgressBar();
+        bar.Left = 26; bar.Top = 446; bar.Width = 848; bar.Height = 6;
         bar.Style = ProgressBarStyle.Marquee; bar.MarqueeAnimationSpeed = 0; bar.Visible = false;
         form.Controls.Add(bar);
 
+        // 日志
         logBox = new TextBox();
         logBox.Multiline = true; logBox.ScrollBars = ScrollBars.Vertical; logBox.ReadOnly = true;
-        logBox.Left = 28; logBox.Top = row3 + 128; logBox.Width = 844; logBox.Height = 280;
+        logBox.Left = 26; logBox.Top = 462; logBox.Width = 848; logBox.Height = 270;
         logBox.BackColor = Color.FromArgb(10, 12, 16); logBox.ForeColor = Color.FromArgb(183, 194, 208);
         logBox.Font = new Font("Consolas", 9.5f); logBox.BorderStyle = BorderStyle.FixedSingle;
         form.Controls.Add(logBox);
 
-        btnOpenLog = MakeButton("打开日志文件", 28, row3 + 418, 130, 30, panel, muted); btnOpenLog.Visible = false;
-        btnOpenLog.Click += (s, e) => OpenFile(Path.Combine(kitDir, "install.log"));
+        // 底部按钮
+        btnOpenLog = MakeButton("打开日志文件", 26, 744, 130, 32, panel, muted);
+        btnOpenLog.Visible = false; btnOpenLog.Click += (s, e) => OpenFile(Path.Combine(kitDir, "install.log"));
         form.Controls.Add(btnOpenLog);
 
-        btnOpenReport = MakeButton("部署报告", 168, row3 + 418, 110, 30, panel, muted); btnOpenReport.Visible = false;
-        btnOpenReport.Click += (s, e) => OpenFile(Path.Combine(installDir.Text, "部署完成报告.md"));
+        btnOpenReport = MakeButton("部署报告", 166, 744, 110, 32, panel, muted);
+        btnOpenReport.Visible = false; btnOpenReport.Click += (s, e) => OpenFile(Path.Combine(installDir.Text, "部署完成报告.md"));
         form.Controls.Add(btnOpenReport);
 
-        btnOpenAi = MakeButton("给 AI 的指令", 288, row3 + 418, 120, 30, panel, muted); btnOpenAi.Visible = false;
-        btnOpenAi.Click += (s, e) => OpenFile(Path.Combine(installDir.Text, "docs", "给AI的安装指令.md"));
+        btnOpenAi = MakeButton("给 AI 的指令", 286, 744, 120, 32, panel, muted);
+        btnOpenAi.Visible = false; btnOpenAi.Click += (s, e) => OpenFile(Path.Combine(installDir.Text, "docs", "给AI的安装指令.md"));
         form.Controls.Add(btnOpenAi);
 
-        btnOpenApp = MakeButton("打开小肥鱼喵", 418, row3 + 418, 140, 30, Color.FromArgb(46, 100, 170), Color.White); btnOpenApp.Visible = false;
-        btnOpenApp.Click += (s, e) => { try { Process.Start(Path.Combine(installDir.Text, "app", "小肥鱼喵.exe")); } catch { } };
+        btnOpenApp = MakeButton("打开小肥鱼喵", 416, 744, 140, 32, Color.FromArgb(46, 100, 170), Color.White);
+        btnOpenApp.Visible = false; btnOpenApp.Click += (s, e) => { try { Process.Start(Path.Combine(installDir.Text, "app", "小肥鱼喵.exe")); } catch { } };
         form.Controls.Add(btnOpenApp);
 
-        btnClose = MakeButton("关闭", 742, row3 + 418, 130, 30, panel, muted);
+        btnClose = MakeButton("关闭", 744, 744, 130, 32, panel, muted);
         btnClose.Click += (s, e) => { if (!running) form.Close(); };
         form.Controls.Add(btnClose);
     }
 
-    static Button MakeButton(string text, int x, int y, int w, int h, Color back, Color fore)
-    {
-        Button b = new Button();
-        b.Text = text; b.Left = x; b.Top = y; b.Width = w; b.Height = h;
-        b.BackColor = back; b.ForeColor = fore; b.FlatStyle = FlatStyle.Flat;
-        b.FlatAppearance.BorderSize = 0;
-        b.Font = new Font("Microsoft YaHei UI", 9f);
-        return b;
-    }
-
     static void OpenUrl(string url) { try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { } }
-    static void OpenFile(string path) { try { if (File.Exists(path)) Process.Start(new ProcessStartInfo("notepad.exe", "\"" + path + "\"") { UseShellExecute = false }); } catch { } }
+
+    static void OpenFile(string path)
+    {
+        try { if (File.Exists(path)) Process.Start(new ProcessStartInfo("notepad.exe", "\"" + path + "\"") { UseShellExecute = false }); } catch { }
+    }
 
     static void Log(string line)
     {
-        if (logBox.InvokeRequired)
-        {
-            logBox.BeginInvoke(new Action(() => Log(line)));
-            return;
-        }
+        if (logBox.InvokeRequired) { logBox.BeginInvoke(new Action(() => Log(line))); return; }
         logBox.AppendText(line + Environment.NewLine);
     }
 
@@ -181,12 +220,8 @@ class Installer
         if (installDir.Text.Trim() == "") { MessageBox.Show("请填写安装目录。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
 
         running = true;
-        success = false;
         btnStart.Enabled = false;
-        chkComfy.Enabled = false;
-        chkDsh.Enabled = false;
-        chkSnow.Enabled = false;
-        chkAgree.Enabled = false;
+        chkComfy.Enabled = false; chkDsh.Enabled = false; chkSnow.Enabled = false; chkAgree.Enabled = false;
         bar.Visible = true; bar.MarqueeAnimationSpeed = 30;
         logBox.Clear();
         status.Text = "正在部署，请保持窗口打开…";
@@ -236,7 +271,6 @@ class Installer
         bar.Visible = false;
         if (ok)
         {
-            success = true;
             status.Text = "✅ 部署完成，小肥鱼喵已上线";
             status.ForeColor = Color.FromArgb(90, 230, 130);
             btnStart.Text = "重新部署";
