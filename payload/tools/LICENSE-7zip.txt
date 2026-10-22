@@ -1,0 +1,2 @@
+﻿7zr.exe 来自 7-Zip (https://www.7-zip.org/)，遵循 GNU LGPL 许可证。
+仅用于解压 ComfyUI 便携包。

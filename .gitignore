@@ -1,0 +1,8 @@
+﻿install.log
+*.bak-*
+node_modules/
+state/
+temp/
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,449 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>小肥鱼喵 · QQ 智能体</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --panel: rgba(255,255,255,0.045);
+    --panel-strong: rgba(255,255,255,0.075);
+    --line: rgba(255,255,255,0.09);
+    --text: #eef2f8;
+    --muted: #98a2b3;
+    --dim: #6b7480;
+    --green: #34d399;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --accent: #7c5cff;
+    --accent2: #38bdf8;
+    --radius: 20px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: "Segoe UI Variable", "Microsoft YaHei UI", "Segoe UI", system-ui, sans-serif;
+    background:
+      radial-gradient(1000px 520px at 12% -10%, rgba(124,92,255,0.22), transparent 60%),
+      radial-gradient(900px 500px at 92% 0%, rgba(56,189,248,0.16), transparent 55%),
+      radial-gradient(700px 400px at 60% 110%, rgba(52,211,153,0.10), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    -webkit-user-select: none;
+    user-select: none;
+    overflow: hidden;
+  }
+  .shell { height: 100%; display: flex; flex-direction: column; gap: 14px; padding: 20px 24px; }
+  header { display: flex; align-items: center; gap: 14px; flex: 0 0 auto; }
+  .logo {
+    width: 46px; height: 46px; border-radius: 15px;
+    background: linear-gradient(140deg, var(--accent), var(--accent2));
+    display: grid; place-items: center; font-size: 23px;
+    box-shadow: 0 10px 30px rgba(124,92,255,0.35);
+  }
+  .brand { display: flex; flex-direction: column; gap: 2px; }
+  .brand h1 { margin: 0; font-size: 20px; letter-spacing: 0.3px; }
+  .brand span { color: var(--muted); font-size: 12.5px; }
+  .head-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 14px; border-radius: 999px; font-size: 13px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--muted);
+    transition: all .25s ease;
+  }
+  .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); }
+  .pill.online { color: #b9f5de; border-color: rgba(52,211,153,0.35); background: rgba(52,211,153,0.1); }
+  .pill.online .dot { background: var(--green); box-shadow: 0 0 10px var(--green); }
+  .pill.offline { color: #ffd1d1; border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.08); }
+  .pill.offline .dot { background: var(--red); }
+
+  main { flex: 1 1 auto; display: grid; grid-template-columns: 1.35fr 1fr; grid-template-rows: auto auto minmax(0, 1fr); gap: 14px; min-height: 0; }
+  .card {
+    background: linear-gradient(180deg, var(--panel-strong), var(--panel));
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  .hero { grid-column: 1 / 2; grid-row: 1 / 2; padding: 18px 22px; display: flex; align-items: center; gap: 22px; position: relative; overflow: hidden; }
+  .hero::after {
+    content: ""; position: absolute; width: 320px; height: 320px; right: -120px; top: -140px;
+    background: radial-gradient(circle, rgba(124,92,255,0.2), transparent 65%); pointer-events: none;
+  }
+  .avatar { position: relative; width: 76px; height: 76px; flex: 0 0 auto; }
+  .avatar .face { width: 100%; height: 100%; border-radius: 24px; background: linear-gradient(145deg, #2a2f3a, #171a21); border: 1px solid rgba(255,255,255,0.12); display: grid; place-items: center; font-size: 38px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .avatar .ring {
+    position: absolute; inset: -7px; border-radius: 34px;
+    border: 2px solid rgba(52,211,153,0); transition: border-color .3s ease;
+  }
+  body.online .avatar .ring { border-color: rgba(52,211,153,0.55); animation: breathe 2.6s ease-in-out infinite; }
+  @keyframes breathe { 0%,100% { box-shadow: 0 0 0 0 rgba(52,211,153,0.25); } 50% { box-shadow: 0 0 0 9px rgba(52,211,153,0); } }
+
+  .hero-info { min-width: 0; flex: 1 1 auto; }
+  .hero-info .kicker { font-size: 12px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; }
+  .hero-info h2 { margin: 5px 0 5px; font-size: 23px; letter-spacing: 0.3px; }
+  .hero-info p { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+  .hero-meta { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+  .hero-meta div { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--dim); }
+  .hero-meta b { font-size: 14px; color: var(--text); font-weight: 600; }
+
+  .actions { grid-column: 2 / 3; grid-row: 1 / 2; padding: 20px 22px; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+  .actions h3 { margin: 0 0 4px; font-size: 13px; color: var(--dim); font-weight: 600; letter-spacing: 1.4px; }
+  .btn-row { display: flex; gap: 10px; }
+  button {
+    font: inherit; color: var(--text); border: 1px solid var(--line); cursor: pointer;
+    border-radius: 14px; padding: 13px 18px; transition: transform .15s ease, box-shadow .2s ease, opacity .2s ease, background .2s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    background: rgba(255,255,255,0.05);
+  }
+  button:hover:not(:disabled) { transform: translateY(-1px); }
+  button:active:not(:disabled) { transform: translateY(0); }
+  button:disabled { opacity: .45; cursor: default; }
+  .btn-start { flex: 1; background: linear-gradient(135deg, #1f9d6b, #34d399); border-color: transparent; color: #052e22; font-weight: 700; box-shadow: 0 12px 28px rgba(52,211,153,0.25); }
+  .btn-stop { flex: 1; background: rgba(248,113,113,0.14); border-color: rgba(248,113,113,0.35); color: #ffc9c9; font-weight: 600; }
+  .btn-restart { flex: 0 0 auto; color: var(--muted); }
+  .hintline { font-size: 12px; color: var(--dim); line-height: 1.5; }
+
+  .services { grid-column: 1 / 3; grid-row: 2 / 3; display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; min-height: 0; align-items: start; }
+  .svc { padding: 14px 15px 12px; display: flex; flex-direction: column; gap: 7px; min-height: 118px; position: relative; transition: border-color .3s ease, transform .2s ease; }
+  .svc:hover { transform: translateY(-2px); }
+  .svc .svc-top { display: flex; align-items: center; gap: 8px; }
+  .svc .icon { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; font-size: 15px; background: rgba(255,255,255,0.06); }
+  .svc .name { font-size: 13px; font-weight: 600; }
+  .svc .dot { margin-left: auto; width: 9px; height: 9px; border-radius: 50%; background: var(--dim); }
+  .svc.ok .dot { background: var(--green); box-shadow: 0 0 9px rgba(52,211,153,0.8); }
+  .svc.bad .dot { background: var(--red); }
+  .svc .detail { font-size: 12px; color: var(--muted); min-height: 32px; line-height: 1.45; word-break: break-all; }
+  .svc .tag { font-size: 11px; color: var(--dim); border-top: 1px solid var(--line); padding-top: 8px; margin-top: auto; display: flex; justify-content: space-between; }
+  .svc.ok { border-color: rgba(52,211,153,0.22); }
+
+  .logcard { grid-column: 1 / 2; grid-row: 3 / 4; display: flex; flex-direction: column; min-height: 0; max-height: 100%; overflow: hidden; padding: 14px 16px; }
+  .logcard .log-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .logcard h3 { margin: 0; font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .5px; }
+  .logcard .spacer { flex: 1; }
+  .mini { font-size: 12px; padding: 6px 11px; border-radius: 10px; }
+  pre.log {
+    flex: 1; margin: 0; overflow: auto; background: rgba(0,0,0,0.35); border: 1px solid var(--line);
+    border-radius: 14px; padding: 12px 14px; font-family: "Cascadia Code", Consolas, monospace;
+    font-size: 12px; line-height: 1.55; color: #b7c2d0; white-space: pre-wrap; word-break: break-all; min-height: 0;
+  }
+  pre.log::-webkit-scrollbar { width: 8px; }
+  pre.log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 8px; }
+
+  .links { grid-column: 2 / 3; grid-row: 3 / 4; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .links h3 { margin: 0; font-size: 13px; color: var(--muted); font-weight: 600; }
+  .link-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .link-grid button { padding: 11px 12px; font-size: 12.5px; justify-content: flex-start; border-radius: 12px; color: #cfd8e3; }
+  .links .foot { margin-top: auto; display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--dim); }
+  .links .foot .spacer { flex: 1; }
+  .ghost { background: transparent; border-color: transparent; color: var(--dim); padding: 6px 8px; }
+  .ghost:hover:not(:disabled) { color: #ffb4b4; }
+
+  .toast-wrap { position: fixed; right: 22px; bottom: 22px; display: flex; flex-direction: column; gap: 10px; z-index: 50; }
+  .toast {
+    min-width: 220px; max-width: 380px; padding: 12px 16px; border-radius: 14px; font-size: 13px;
+    background: rgba(22,26,34,0.96); border: 1px solid var(--line); color: var(--text);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.45); opacity: 0; transform: translateY(8px);
+    transition: all .25s ease;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.ok { border-color: rgba(52,211,153,0.45); }
+  .toast.err { border-color: rgba(248,113,113,0.45); }
+
+  .spinner { width: 15px; height: 15px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.25); border-top-color: currentColor; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 900px) {
+    body { overflow: auto; }
+    .shell { height: auto; }
+    main { grid-template-columns: 1fr; grid-template-rows: none; }
+    .hero, .actions, .services, .logcard, .links { grid-column: 1 / 2; grid-row: auto; }
+    .services { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="logo">🐟</div>
+    <div class="brand">
+      <h1>小肥鱼喵</h1>
+      <span>DeepSeek · QQ 智能体控制台</span>
+    </div>
+    <div class="head-right">
+      <div class="pill" id="headPill"><span class="dot"></span><span id="headPillText">检测中…</span></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="card hero">
+      <div class="avatar">
+        <div class="ring"></div>
+        <div class="face">🐟</div>
+      </div>
+      <div class="hero-info">
+        <div class="kicker" id="heroKicker">SYSTEM STATUS</div>
+        <h2 id="heroTitle">正在检测…</h2>
+        <p id="heroDesc">正在读取本机各个服务的运行状态。</p>
+        <div class="hero-meta">
+          <div>QQ 账号<b id="metaQQ">—</b></div>
+          <div>DSH 端口<b id="metaDsh">—</b></div>
+          <div>最后刷新<b id="metaTime">—</b></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card actions">
+      <h3>控制</h3>
+      <div class="btn-row">
+        <button class="btn-start" id="btnStart">▶ 启动全部</button>
+        <button class="btn-stop" id="btnStop">■ 停止</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn-restart" id="btnRestart" style="flex:1">↻ 重启服务</button>
+      </div>
+      <div class="hintline" id="actionHint">启动会拉起 DSH + SnowLuma + 桥接 + ComfyUI，约需 20~90 秒。</div>
+    </section>
+
+    <section class="services" id="services">
+      <div class="card svc" data-key="dsh">
+        <div class="svc-top"><div class="icon">🧠</div><div class="name">DSH 大脑</div><div class="dot"></div></div>
+        <div class="detail" data-detail>未检测</div>
+        <div class="tag"><span>agent</span><span data-tag>—</span></div>
+      </div>
+      <div class="card svc" data-key="snowluma">
+        <div class="svc-top"><div class="icon">🔌</div><div class="name">SnowLuma 网关</div><div class="dot"></div></div>
+        <div class="detail" data-detail>未检测</div>
+        <div class="tag"><span>QQ 协议端</span><span data-tag>—</span></div>
+      </div>
+      <div class="card svc" data-key="bridge">
+        <div class="svc-top"><div class="icon">🌉</div><div class="name">qq-bridge 桥接</div><div class="dot"></div></div>
+        <div class="detail" data-detail>未检测</div>
+        <div class="tag"><span>消息路由</span><span data-tag>—</span></div>
+      </div>
+      <div class="card svc" data-key="comfy">
+        <div class="svc-top"><div class="icon">🎨</div><div class="name">ComfyUI 画图</div><div class="dot"></div></div>
+        <div class="detail" data-detail>未检测</div>
+        <div class="tag"><span>可选能力</span><span data-tag>—</span></div>
+      </div>
+      <div class="card svc" data-key="qq">
+        <div class="svc-top"><div class="icon">💬</div><div class="name">QQ 账号</div><div class="dot"></div></div>
+        <div class="detail" data-detail>未检测</div>
+        <div class="tag"><span>在线状态</span><span data-tag>—</span></div>
+      </div>
+    </section>
+
+    <section class="card logcard">
+      <div class="log-head">
+        <h3>桥接日志</h3>
+        <div class="spacer"></div>
+        <button class="mini" id="btnLogRefresh">刷新</button>
+        <button class="mini" id="btnLogPause">暂停滚动</button>
+      </div>
+      <pre class="log" id="logBox">加载中…</pre>
+    </section>
+
+    <section class="card links">
+      <h3>快捷入口</h3>
+      <div class="link-grid">
+        <button data-open="bridgeConsole">🌐 桥接控制台</button>
+        <button data-open="snowluma">🔐 SnowLuma 面板</button>
+        <button data-open="comfyui">🎨 ComfyUI</button>
+        <button data-open="logs">📁 日志目录</button>
+        <button data-open="advanced">🧩 高级管理面板</button>
+        <button data-open="bridgeDir">📂 程序目录</button>
+      </div>
+      <div class="foot">
+        <span>小肥鱼喵 · 本机应用</span>
+        <div class="spacer"></div>
+        <button class="ghost" id="btnShutdown">关闭后台服务</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+  let busy = false;
+  let logPaused = false;
+  let lastLog = '';
+  let pollFast = null;
+
+  const SERVICE_META = {
+    dsh: { icon: '🧠', name: 'DSH 大脑', tag: 'agent' },
+    snowluma: { icon: '🔌', name: 'SnowLuma 网关', tag: 'QQ 协议端' },
+    bridge: { icon: '🌉', name: 'qq-bridge 桥接', tag: '消息路由' },
+    comfy: { icon: '🎨', name: 'ComfyUI 画图', tag: '可选能力' },
+    qq: { icon: '💬', name: 'QQ 账号', tag: '在线状态' }
+  };
+
+  function toast(text, kind = '') {
+    const el = document.createElement('div');
+    el.className = 'toast ' + kind;
+    el.textContent = text;
+    $('#toastWrap').appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3200);
+  }
+
+  async function api(path, opts) {
+    const res = await fetch(path, opts);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }
+
+  function setBusy(v) {
+    busy = v;
+    ['#btnStart', '#btnStop', '#btnRestart'].forEach((s) => { $(s).disabled = v; });
+  }
+
+  function render(s) {
+    document.body.classList.toggle('online', !!s.online);
+    const pill = $('#headPill');
+    pill.className = 'pill ' + (s.online ? 'online' : 'offline');
+    $('#headPillText').textContent = s.online ? '已上线' : (s.dsh.running || s.snowluma.running || s.bridge.running ? '部分就绪' : '未启动');
+
+    if (s.online) {
+      $('#heroKicker').textContent = 'ONLINE';
+      $('#heroTitle').textContent = '已上线，正在和你聊天';
+      $('#heroDesc').textContent = '所有核心服务运行正常。关闭本窗口不影响后台运行，消息会自动回复到 QQ。';
+    } else if (s.dsh.running || s.snowluma.running || s.bridge.running) {
+      $('#heroKicker').textContent = 'PARTIAL';
+      $('#heroTitle').textContent = '部分服务未就绪';
+      $('#heroDesc').textContent = '有服务掉线了，点「启动全部」会自动补齐；也可以看下方日志定位问题。';
+    } else {
+      $('#heroKicker').textContent = 'OFFLINE';
+      $('#heroTitle').textContent = '当前未启动';
+      $('#heroDesc').textContent = '点「启动全部」即可拉起整套服务，小肥鱼喵会上线接收 QQ 消息。';
+    }
+
+    $('#metaQQ').textContent = s.qq.online ? (s.qq.nickname + '（' + s.qq.uin + '）') : '离线';
+    $('#metaDsh').textContent = s.dsh.port ? ('127.0.0.1:' + s.dsh.port) : '—';
+    $('#metaTime').textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+
+    const map = {
+      dsh: { ok: s.dsh.running, detail: s.dsh.running ? '运行中 · 端口 ' + s.dsh.port : '未运行', tag: s.dsh.running ? 'OK' : '--' },
+      snowluma: { ok: s.snowluma.running, detail: s.snowluma.running ? '运行中 · 端口 5099' : '未运行', tag: s.snowluma.running ? 'OK' : '--' },
+      bridge: { ok: s.bridge.running, detail: s.bridge.running ? '运行中 · 端口 3100' : '未运行', tag: s.bridge.running ? 'OK' : '--' },
+      comfy: { ok: s.comfy.running, detail: s.comfy.running ? '运行中 · 端口 8188' : '未运行（不影响聊天）', tag: s.comfy.running ? 'OK' : '--' },
+      qq: { ok: s.qq.online, detail: s.qq.online ? (s.qq.nickname + ' · ' + s.qq.uin) : '未登录/离线', tag: s.qq.online ? 'OK' : '--' }
+    };
+    $$('.svc').forEach((card) => {
+      const key = card.dataset.key;
+      const item = map[key];
+      if (!item) return;
+      card.classList.toggle('ok', item.ok);
+      card.classList.toggle('bad', !item.ok);
+      card.querySelector('[data-detail]').textContent = item.detail;
+      card.querySelector('[data-tag]').textContent = item.tag;
+    });
+  }
+
+  async function refresh() {
+    try {
+      const s = await api('/api/status');
+      render(s);
+      updateActionHint(s);
+      return s;
+    } catch (e) {
+      $('#headPillText').textContent = '后端未连接';
+      $('#heroTitle').textContent = '无法连接后台服务';
+      $('#heroDesc').textContent = '请关闭本窗口后重新双击「小肥鱼喵」打开。';
+    }
+  }
+
+  function updateActionHint(s) {
+    if (busy) return;
+    if (s.online) $('#actionHint').textContent = '已在运行中。需要完全停掉用「停止」；仅重启进程用「重启服务」。';
+    else if (!s.dsh.running) $('#actionHint').textContent = 'DSH 未运行，启动时会一并拉起；首次启动约 1~2 分钟。';
+    else $('#actionHint').textContent = '有服务未就绪，点「启动全部」自动补齐。';
+  }
+
+  async function pollUntil(predicate, timeoutMs = 120000) {
+    const start = Date.now();
+    return new Promise((resolve) => {
+      const timer = setInterval(async () => {
+        const s = await refresh();
+        if (predicate(s)) { clearInterval(timer); resolve(true); }
+        else if (Date.now() - start > timeoutMs) { clearInterval(timer); resolve(false); }
+      }, 1200);
+    });
+  }
+
+  async function doAction(action) {
+    if (busy) return;
+    setBusy(true);
+    const labels = { start: '正在启动', stop: '正在停止', restart: '正在重启' };
+    $('#actionHint').textContent = labels[action] + '… 请稍候';
+    try {
+      await api('/api/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action }) });
+      toast(labels[action] + '已触发', 'ok');
+      if (action === 'start') {
+        const ok = await pollUntil((s) => s.online, 150000);
+        toast(ok ? '✅ 启动成功，小肥鱼喵已上线' : '⚠️ 启动超时，请看日志', ok ? 'ok' : 'err');
+      } else if (action === 'stop') {
+        const ok = await pollUntil((s) => !s.snowluma.running && !s.bridge.running && !s.comfy.running, 60000);
+        toast(ok ? '✅ 已停止' : '⚠️ 停止超时', ok ? 'ok' : 'err');
+      } else {
+        await new Promise((r) => setTimeout(r, 1200));
+        const ok = await pollUntil((s) => s.online, 180000);
+        toast(ok ? '✅ 重启完成，已上线' : '⚠️ 重启后未全部就绪', ok ? 'ok' : 'err');
+      }
+    } catch (e) {
+      toast('操作失败：' + e.message, 'err');
+    } finally {
+      setBusy(false);
+      refresh();
+    }
+  }
+
+  async function loadLogs() {
+    if (logPaused) return;
+    try {
+      const r = await api('/api/logs?lines=60');
+      if (r.text !== lastLog) {
+        lastLog = r.text;
+        const box = $('#logBox');
+        const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+        box.textContent = r.text || '(空)';
+        if (atBottom) box.scrollTop = box.scrollHeight;
+      }
+    } catch {}
+  }
+
+  $('#btnStart').addEventListener('click', () => doAction('start'));
+  $('#btnStop').addEventListener('click', () => doAction('stop'));
+  $('#btnRestart').addEventListener('click', () => doAction('restart'));
+  $('#btnLogRefresh').addEventListener('click', loadLogs);
+  $('#btnLogPause').addEventListener('click', () => {
+    logPaused = !logPaused;
+    $('#btnLogPause').textContent = logPaused ? '继续滚动' : '暂停滚动';
+  });
+  $$('[data-open]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try { await api('/api/open', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ target: btn.dataset.open }) }); }
+      catch { toast('打开失败', 'err'); }
+    });
+  });
+  $('#btnShutdown').addEventListener('click', async () => {
+    try { await api('/api/shutdown', { method: 'POST' }); toast('后台服务已关闭，可以关闭窗口了', 'ok'); }
+    catch { toast('关闭失败', 'err'); }
+  });
+
+  refresh();
+  loadLogs();
+  try { if (window.outerWidth > 1500 || window.outerHeight > 1100) { window.resizeTo(1080, 760); } } catch (e) {}
+  setInterval(refresh, 2200);
+  setInterval(loadLogs, 3000);
+</script>
+</body>
+</html>
+
+
